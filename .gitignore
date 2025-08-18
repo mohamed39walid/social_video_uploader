@@ -1,0 +1,5 @@
+# Ignore all files in credentials directory
+credentials/
+
+# OR to be more specific (recommended):
+credentials/client_secret_*.json
