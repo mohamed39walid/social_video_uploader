@@ -1,37 +1,64 @@
 from django.db import models
-
-# Create your models here.
-
+from django.utils.html import format_html
 
 class VideoPost(models.Model):
+    # Supported platforms
     class Platform(models.TextChoices):
-        YOUTUBE = 'YT', 'Youtube'
-        VIMEO = 'VM', 'Vimeo',
-        Dailymotion = 'DM', 'Dailymotion'
-        
+        YOUTUBE = "YT", "YouTube"
+        DAILYMOTION = "DM", "Dailymotion"
+        VIMEO = "VM", "Vimeo"
+
+    # Upload status options
     class Status(models.TextChoices):
-        PENDING = 'P', "Pending"
-        SUCCESS = 'S', "Success"
-        FAILED = 'F', 'Failed'
-        
+        PENDING = "pending", "Pending"
+        SUCCESS = "success", "Success"
+        FAILED = "failed", "Failed"
+
+    # Basic video info
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    video_file = models.FileField(upload_to='videos/', blank=True, null=True)
+    video_file = models.FileField(upload_to="videos/", blank=True, null=True)
     video_url = models.URLField(blank=True)
-    platforms = models.CharField(
-        max_length=2,
-        choices = Platform.choices,
-        default=Platform.YOUTUBE
+
+    # Platforms selected (stored as JSON list)
+    platforms = models.JSONField(default=list, blank=True)
+
+    # Privacy settings per platform
+    youtube_privacy = models.CharField(
+        max_length=10,
+        choices=[("public", "Public"), ("private", "Private")],
+        default="private"
     )
-    upload_status = models.CharField(
-        max_length=2,
-        choices= Status.choices,
-        default= Status.PENDING
+    dailymotion_privacy = models.CharField(
+        max_length=10,
+        choices=[("public", "Public"), ("private", "Private")],
+        default="private"
     )
-    
+    vimeo_privacy = models.CharField(
+        max_length=10,
+        choices=[("public", "Public"), ("private", "Private")],
+        default="private"
+    )
+
+    # Upload status per platform (stored as JSON)
+    upload_status = models.JSONField(default=dict, blank=True)
+    # Example: {"YT": "pending", "DM": "pending", "VM": "pending"}
+
+    # Platform video IDs after upload
+    youtube_video_id = models.CharField(max_length=50, blank=True)
+    dailymotion_video_id = models.CharField(max_length=50, blank=True)
+    vimeo_video_id = models.CharField(max_length=50, blank=True)
+
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    
+
+    def youtube_link(self):
+        if self.youtube_video_id:
+            url = f"https://www.youtube.com/watch?v={self.youtube_video_id}"
+            return format_html('<a href="{}" target="_blank">{}</a>', url, url)
+        return "-"
+    youtube_link.short_description = "YouTube Link"
+
     def __str__(self):
-        return f"{self.title} ({self.get_platforms_display()})"
+        return self.title
