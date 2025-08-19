@@ -107,7 +107,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Asia/Bahrain"  # or your local timezone
+USE_TZ = True
+
 
 USE_I18N = True
 
@@ -123,3 +125,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Vimeo API Access Token
+VIMEO_ACCESS_TOKEN = "99a14ff04f5fe8d57cac2eb92e5780ed"
+

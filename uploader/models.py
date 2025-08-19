@@ -53,12 +53,13 @@ class VideoPost(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def youtube_link(self):
-        if self.youtube_video_id:
-            url = f"https://www.youtube.com/watch?v={self.youtube_video_id}"
-            return format_html('<a href="{}" target="_blank">{}</a>', url, url)
+
+    def youtube_link(self, obj):
+        if obj.youtube_video_id:
+            url = f"https://www.youtube.com/watch?v={obj.youtube_video_id}"
+            return format_html('<a href="{}" target="_blank">{}</a>', url, "Watch Video")
         return "-"
-    youtube_link.short_description = "YouTube Link"
+    youtube_link.short_description = "YouTube"
 
     def __str__(self):
         return self.title
