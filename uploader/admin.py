@@ -4,7 +4,8 @@ from django import forms
 from .models import VideoPost
 from .utils.youtube_auth import get_youtube_credentials
 from .platforms.youtube import upload_to_youtube
-from .platforms.vimeo_api import upload_to_vimeo  # <-- Import Vimeo API function
+from .platforms.vimeo_api import upload_to_vimeo 
+from .platforms.dailymotion import upload_to_dailymotion  # fixed import
 
 
 # ----------------------
@@ -55,7 +56,9 @@ class VideoPostForm(forms.ModelForm):
         }
 
 
-
+# ----------------------
+# Platform Filter
+# ----------------------
 class PlatformFilter(admin.SimpleListFilter):
     title = "Platform"
     parameter_name = "platform"
@@ -69,9 +72,9 @@ class PlatformFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            # Treat JSONField as string
             return queryset.filter(platforms__icontains=self.value())
         return queryset
+
 
 # ----------------------
 # Admin
@@ -122,7 +125,7 @@ class VideoPostAdmin(admin.ModelAdmin):
     def dailymotion_link(self, obj):
         if obj.dailymotion_video_id:
             url = f"https://www.dailymotion.com/video/{obj.dailymotion_video_id}"
-            return format_html('<a href="{}" target="_blank">{}</a>', url, obj.dailymotion_video_id)
+            return format_html('<a href="{}" target="_blank">{}</a>', url, "Watch Video")
         return "-"
     dailymotion_link.short_description = "Dailymotion"
 
@@ -150,13 +153,9 @@ class VideoPostAdmin(admin.ModelAdmin):
                         privacy_status=video.youtube_privacy,
                         credentials=creds,
                     )
-
-                    # Ensure only the ID string is stored
                     if isinstance(video_id, tuple):
-                        video_id = video_id[0]  # take the first element if a tuple
+                        video_id = video_id[0]
                     video.youtube_video_id = video_id
-                    video.save()
-
                     upload_status["YT"] = "uploaded"
                     self.message_user(request, f"Uploaded {video.title} to YouTube")
                 except Exception as e:
@@ -170,10 +169,11 @@ class VideoPostAdmin(admin.ModelAdmin):
                 try:
                     privacy_map = {"public": "anybody", "private": "nobody"}
                     vimeo_id = upload_to_vimeo(
-                    video_path=video.video_file.path,
-                    title=video.title,
-                    description=video.description,
-                    privacy=privacy_map.get(video.vimeo_privacy, "nobody"))
+                        video_path=video.video_file.path,
+                        title=video.title,
+                        description=video.description,
+                        privacy=privacy_map.get(video.vimeo_privacy, "nobody")
+                    )
                     video.vimeo_video_id = vimeo_id
                     upload_status["VM"] = "uploaded"
                     self.message_user(request, f"Uploaded {video.title} to Vimeo")
@@ -186,10 +186,18 @@ class VideoPostAdmin(admin.ModelAdmin):
             # ----------------------
             if "DM" in video.platforms:
                 try:
-                    # TODO: integrate Dailymotion API
-                    video.dailymotion_video_id = f"DEBUG_DM_{video.id}"
+                    published = True if video.dailymotion_privacy == "public" else False
+                    res = upload_to_dailymotion(
+                        file_path=video.video_file.path,
+                        title=video.title,
+                        description=video.description,
+                        published=published,
+                        access_token="MTR9aCItSRRXHQkiOwB3NVNXdF42Zyx7ADIAMQoyPjxa"
+                    )
+                    # Extract only the video ID from the response
+                    video.dailymotion_video_id = res['id']
                     upload_status["DM"] = "uploaded"
-                    self.message_user(request, f"Simulated Dailymotion upload for {video.title}")
+                    self.message_user(request, f"Uploaded {video.title} to Dailymotion")
                 except Exception as e:
                     upload_status["DM"] = "failed"
                     self.message_user(request, f"Dailymotion upload failed for {video.title}: {e}", level="error")

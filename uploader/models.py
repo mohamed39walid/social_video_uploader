@@ -60,6 +60,13 @@ class VideoPost(models.Model):
             return format_html('<a href="{}" target="_blank">{}</a>', url, "Watch Video")
         return "-"
     youtube_link.short_description = "YouTube"
+    def dailymotion_link(self, obj):
+        if obj.dailymotion_video_id:
+            url = f"https://www.dailymotion.com/video/{obj.dailymotion_video_id}"
+            return format_html('<a href="{}" target="_blank">{}</a>', url, "Watch Video")
+        return "-"
+    dailymotion_link.short_description = "Dailymotion"
+
 
     def __str__(self):
         return self.title
