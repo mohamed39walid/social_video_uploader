@@ -28,18 +28,8 @@ def upload_to_youtube(video_path, title, description, privacy_status, credential
 
 
 def check_youtube_video_exists(video_id: str, credentials) -> bool:
-    """
-    Check if a YouTube video exists.
-
-    Args:
-        video_id: YouTube video ID
-        credentials: Google OAuth2 credentials object
-
-    Returns:
-        True if video exists, False otherwise
-    """
     if not video_id:
-        return False  # No ID, video does not exist
+        return False  
 
     try:
         youtube = build('youtube', 'v3', credentials=credentials)

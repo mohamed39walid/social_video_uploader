@@ -1,23 +1,18 @@
-# platforms/dailymotion.py
+
 import requests
 from urllib.parse import urlencode
 
-# ----------------------
-# Hardcoded credentials
-# ----------------------
 CLIENT_ID = "ec1e4db81bc76ba6f7b8"
 CLIENT_SECRET = "653187359ab5ce02d7091e86f44710da98b9933e" 
 REDIRECT_URI = "http://127.0.0.1:8000/dailymotion/callback/"
 
-# API endpoints
+
 AUTH_URL = "https://www.dailymotion.com/oauth/authorize"
 TOKEN_URL = "https://api.dailymotion.com/oauth/token"
 UPLOAD_URL = "https://api.dailymotion.com/file/upload"
 CREATE_VIDEO_URL = "https://api.dailymotion.com/me/videos"
 
-# ----------------------
-# Step 1: Generate authorization URL
-# ----------------------
+
 def get_authorization_url(state=None):
     """
     Generate Dailymotion authorization URL for user login.
@@ -33,9 +28,6 @@ def get_authorization_url(state=None):
         params["state"] = state
     return f"{AUTH_URL}?{urlencode(params)}"
 
-# ----------------------
-# Step 2: Exchange code for access token
-# ----------------------
 def exchange_code_for_token(code: str) -> dict:
     """
     Exchange authorization code for access token.
@@ -54,9 +46,7 @@ def exchange_code_for_token(code: str) -> dict:
         raise Exception(f"Token exchange failed. Response: {res.json()}")
     return res.json()  # {"access_token": "...", "refresh_token": "...", "expires_in": ...}
 
-# ----------------------
-# Step 3: Refresh access token
-# ----------------------
+
 def refresh_access_token(refresh_token: str) -> dict:
     """
     Refresh an expired access token.
@@ -69,20 +59,15 @@ def refresh_access_token(refresh_token: str) -> dict:
     }
     res = requests.post(TOKEN_URL, data=data)
     res.raise_for_status()
-    return res.json()  # {"access_token": "...", "expires_in": ...}
+    return res.json()  
 
-# ----------------------
-# Step 4: Upload video
-# ----------------------
-# platforms/dailymotion.py
+
 import requests
 
-# ----------------------
-# Hardcoded credentials
-# ----------------------
-CLIENT_ID = "ec1e4db81bc76ba6f7b8"        # Replace with your Client ID
-CLIENT_SECRET = "653187359ab5ce02d7091e86f44710da98b9933e"  # Replace with your Client Secret
-REDIRECT_URI = "http://127.0.0.1:8000/dailymotion/callback/"  # Must match app
+
+CLIENT_ID = "ec1e4db81bc76ba6f7b8"
+CLIENT_SECRET = "653187359ab5ce02d7091e86f44710da98b9933e" 
+REDIRECT_URI = "http://127.0.0.1:8000/dailymotion/callback/" 
 
 # API endpoints
 AUTH_URL = "https://www.dailymotion.com/oauth/authorize"
@@ -91,14 +76,8 @@ UPLOAD_URL = "https://api.dailymotion.com/file/upload"
 CREATE_VIDEO_URL = "https://api.dailymotion.com/me/videos"
 
 
-# ----------------------
-# Step 1: Generate authorization URL
-# ----------------------
+
 def get_authorization_url(state: str = None):
-    """
-    Step 1: Redirect user to Dailymotion login to get authorization code
-    Optional `state` can be passed to identify the video or user.
-    """
     url = (
         f"{AUTH_URL}?response_type=code"
         f"&client_id={CLIENT_ID}"
@@ -110,9 +89,7 @@ def get_authorization_url(state: str = None):
     return url
 
 
-# ----------------------
-# Step 2: Exchange code for access token
-# ----------------------
+
 def exchange_code_for_token(code: str) -> dict:
     data = {
         "grant_type": "authorization_code",
@@ -126,12 +103,9 @@ def exchange_code_for_token(code: str) -> dict:
         res.raise_for_status()
     except requests.HTTPError:
         raise Exception(f"Token exchange failed. Response: {res.json()}")
-    return res.json()  # {"access_token": "...", "refresh_token": "...", "expires_in": ...}
+    return res.json()  
 
 
-# ----------------------
-# Step 3: Refresh access token
-# ----------------------
 def refresh_access_token(refresh_token: str) -> dict:
     data = {
         "grant_type": "refresh_token",
@@ -141,31 +115,15 @@ def refresh_access_token(refresh_token: str) -> dict:
     }
     res = requests.post(TOKEN_URL, data=data)
     res.raise_for_status()
-    return res.json()  # {"access_token": "...", "expires_in": ...}
+    return res.json()  
 
 
-# ----------------------
-# Step 4: Upload video
-# ----------------------
+
 def upload_to_dailymotion(file_path: str, title: str, access_token: str, description: str = "",
                           channel: str = "news", published: bool = True, is_for_kids: bool = False) -> dict:
-    """
-    Upload a video to Dailymotion using an access token.
-
-    Args:
-        file_path: Local path to video file
-        title: Video title
-        access_token: OAuth2 access token
-        description: Video description
-        channel: Video channel (default "news")
-        published: Whether video should be public
-        is_for_kids: Required by Dailymotion when publishing
-    Returns:
-        JSON response from Dailymotion API
-    """
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    # 1. Get upload URL
+
     res = requests.get(UPLOAD_URL, headers=headers)
     try:
         res.raise_for_status()
@@ -173,7 +131,6 @@ def upload_to_dailymotion(file_path: str, title: str, access_token: str, descrip
         raise Exception(f"Upload URL fetch failed. Response: {res.json()}")
     upload_endpoint = res.json()["upload_url"]
 
-    # 2. Upload file
     with open(file_path, "rb") as f:
         res = requests.post(upload_endpoint, files={"file": f})
         try:
@@ -182,14 +139,13 @@ def upload_to_dailymotion(file_path: str, title: str, access_token: str, descrip
             raise Exception(f"Video upload failed. Response: {res.json()}")
         uploaded_url = res.json()["url"]
 
-    # 3. Create video object
     data = {
         "url": uploaded_url,
         "title": title,
         "description": description,
         "channel": channel,
         "published": "true" if published else "false",
-        "is_created_for_kids": "true" if is_for_kids else "false",  # Required by Dailymotion
+        "is_created_for_kids": "true" if is_for_kids else "false",
     }
     res = requests.post(CREATE_VIDEO_URL, headers=headers, data=data)
     try:
@@ -197,24 +153,13 @@ def upload_to_dailymotion(file_path: str, title: str, access_token: str, descrip
     except requests.HTTPError:
         raise Exception(f"Video creation failed. Response: {res.json()}")
 
-    return res.json()  # {"id": "x123abc", "title": "...", ...}
-# ----------------------
-# Step 5: Full flow helper
-# ----------------------
+    return res.json()
+
 def upload_video_flow(request, video):
-    """
-    Handles user-friendly flow:
-    1. Check for stored access token.
-    2. If missing, redirect user to login.
-    3. If token exists, upload video immediately.
-    """
-    # Example: access token stored in session per user
     access_token = request.session.get("dm_access_token")
     if not access_token:
-        # Redirect user to Dailymotion login
         return {"redirect": get_authorization_url(state=str(video.id))}
     
-    # Otherwise, upload directly
     result = upload_to_dailymotion(
         file_path=video.video_file.path,
         title=video.title,
@@ -228,9 +173,6 @@ def upload_video_flow(request, video):
 
 
 
-# ----------------------
-# Step 6: Check if Dailymotion video exists
-# ----------------------
 def check_dailymotion_video_exists(video_id, access_token):
     url = f"https://api.dailymotion.com/video/{video_id}"
     headers = {"Authorization": f"Bearer {access_token}"}

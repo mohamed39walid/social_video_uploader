@@ -12,15 +12,12 @@ from .platforms.vimeo_api import upload_to_vimeo, check_vimeo_video_exists
 from .platforms.dailymotion import (
     upload_to_dailymotion,
     check_dailymotion_video_exists,
-    get_authorization_url,  # <-- add this
+    get_authorization_url,
 )
 
 
 
 class VideoPostCreateView(APIView):
-    """
-    Create a new VideoPost
-    """
     def post(self, request):
         serializer = VideoPostSerializer(data=request.data)
         if serializer.is_valid():
@@ -33,9 +30,6 @@ class VideoPostCreateView(APIView):
 
 
 class VideoPostUploadView(APIView):
-    """
-    Upload video to selected platforms
-    """
     def post(self, request, pk):
         video = get_object_or_404(VideoPost, pk=pk)
         upload_status = video.upload_status or {}
@@ -43,9 +37,6 @@ class VideoPostUploadView(APIView):
         if not video.video_file:
             return Response({"error": "No video file"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ---------------- YouTube ----------------
-       # ---------------- YouTube ----------------
-# ---------------- YouTube ----------------
         if "YT" in video.platforms:
             try:
 
@@ -65,7 +56,6 @@ class VideoPostUploadView(APIView):
             except Exception as e:
                 upload_status["YT"] = f"failed: {str(e)}"
 
-        # ---------------- Vimeo ----------------
         if "VM" in video.platforms:
             try:
                 if video.vimeo_video_id and check_vimeo_video_exists(video.vimeo_video_id):
@@ -83,13 +73,12 @@ class VideoPostUploadView(APIView):
             except Exception as e:
                 upload_status["VM"] = f"failed: {str(e)}"
 
-        # ---------------- Dailymotion ----------------
-        # ---------------- Dailymotion ----------------
+
         if "DM" in video.platforms:
             try:
                 access_token = request.session.get("dm_access_token")
                 if not access_token:
-                    # Instead of server-side redirect, return URL for frontend to open in new tab
+
                     auth_url = get_authorization_url(state=str(video.id))
                     return Response(
                         {"redirect_url": auth_url, "message": "Open this URL in a new tab to login to Dailymotion"},
@@ -114,7 +103,7 @@ class VideoPostUploadView(APIView):
                 upload_status["DM"] = f"failed: {str(e)}"
 
 
-        # Save final status
+
         video.upload_status = upload_status
         video.save()
 
@@ -126,9 +115,7 @@ class VideoPostUploadView(APIView):
 
 
 class VideoPostListView(APIView):
-    """
-    List existing videos and their statuses
-    """
+
     def get(self, request):
         videos = VideoPost.objects.all()
         serializer = VideoPostSerializer(videos, many=True)

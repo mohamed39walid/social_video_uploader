@@ -93,7 +93,7 @@ class VideoPostAdmin(admin.ModelAdmin):
                 timestamp = attempt.get("timestamp", "")
                 platform = attempt.get("platform", "")
                 result = attempt.get("result", "")
-                # Make it look nicer: timestamp - PLATFORM: result
+
                 formatted += f"{timestamp} - <b>{platform}</b>: {result}<br>"
             return format_html(formatted)
         return "-"
@@ -153,7 +153,7 @@ class VideoPostAdmin(admin.ModelAdmin):
                 )
                 continue
 
-# YouTube block
+
             if "YT" in video.platforms:
                 try:
                     creds = ""
@@ -184,7 +184,7 @@ class VideoPostAdmin(admin.ModelAdmin):
                         f"YouTube upload failed for {video.title}: {e}",
                         level="error",
                     )
-                # Append attempt to upload_history
+
                 video.upload_history.append({
                     "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "platform": "YT",
@@ -238,7 +238,7 @@ class VideoPostAdmin(admin.ModelAdmin):
                             f"Dailymotion video already exists for {video.title}",
                         )
                     else:
-                        # Video missing or invalid, upload
+
                         published = video.dailymotion_privacy == "public"
                         res = upload_to_dailymotion(
                             file_path=video.video_file.path,
