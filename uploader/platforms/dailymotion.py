@@ -5,9 +5,9 @@ from urllib.parse import urlencode
 # ----------------------
 # Hardcoded credentials
 # ----------------------
-CLIENT_ID = "2d8c6ca17a82d69ac59c"        # Replace with your Client ID
-CLIENT_SECRET = "6b6d4f7b5432e044d7b326d55de18b652f5da292"  # Replace with your Client Secret
-REDIRECT_URI = "http://127.0.0.1:8000/dailymotion/callback/"  # Must match app
+CLIENT_ID = "ec1e4db81bc76ba6f7b8"
+CLIENT_SECRET = "653187359ab5ce02d7091e86f44710da98b9933e" 
+REDIRECT_URI = "http://127.0.0.1:8000/dailymotion/callback/"
 
 # API endpoints
 AUTH_URL = "https://www.dailymotion.com/oauth/authorize"
@@ -80,8 +80,8 @@ import requests
 # ----------------------
 # Hardcoded credentials
 # ----------------------
-CLIENT_ID = "2d8c6ca17a82d69ac59c"        # Replace with your Client ID
-CLIENT_SECRET = "6b6d4f7b5432e044d7b326d55de18b652f5da292"  # Replace with your Client Secret
+CLIENT_ID = "ec1e4db81bc76ba6f7b8"        # Replace with your Client ID
+CLIENT_SECRET = "653187359ab5ce02d7091e86f44710da98b9933e"  # Replace with your Client Secret
 REDIRECT_URI = "http://127.0.0.1:8000/dailymotion/callback/"  # Must match app
 
 # API endpoints

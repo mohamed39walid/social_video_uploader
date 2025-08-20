@@ -12,6 +12,7 @@ from .platforms.dailymotion import (
 )
 from django.shortcuts import redirect
 import requests
+import datetime
 
 
 class VideoPostForm(forms.ModelForm):
@@ -81,8 +82,24 @@ class VideoPostAdmin(admin.ModelAdmin):
         "youtube_link",
         "vimeo_link",
         "dailymotion_link",
+        "show_upload_history",
         "created_at",
     )
+    
+    def show_upload_history(self, obj):
+        if obj.upload_history:
+            formatted = ""
+            for attempt in obj.upload_history:
+                timestamp = attempt.get("timestamp", "")
+                platform = attempt.get("platform", "")
+                result = attempt.get("result", "")
+                # Make it look nicer: timestamp - PLATFORM: result
+                formatted += f"{timestamp} - <b>{platform}</b>: {result}<br>"
+            return format_html(formatted)
+        return "-"
+
+    
+    show_upload_history.short_description = "Upload History"
     list_filter = (PlatformFilter, "created_at")
     readonly_fields = ("youtube_link", "vimeo_link", "dailymotion_link")
     actions = ["upload_to_platforms"]
@@ -136,11 +153,13 @@ class VideoPostAdmin(admin.ModelAdmin):
                 )
                 continue
 
+# YouTube block
             if "YT" in video.platforms:
                 try:
                     creds = ""
                     if video.youtube_video_id:
                         upload_status["YT"] = "exists"
+                        result = "exists"
                         self.message_user(
                             request, f"YouTube video already exists for {video.title}"
                         )
@@ -155,14 +174,23 @@ class VideoPostAdmin(admin.ModelAdmin):
                         )
                         video.youtube_video_id = video_id
                         upload_status["YT"] = "uploaded"
+                        result = "uploaded"
                         self.message_user(request, f"Uploaded {video.title} to YouTube")
                 except Exception as e:
                     upload_status["YT"] = "failed"
+                    result = "failed"
                     self.message_user(
                         request,
                         f"YouTube upload failed for {video.title}: {e}",
                         level="error",
                     )
+                # Append attempt to upload_history
+                video.upload_history.append({
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "platform": "YT",
+                    "result": result
+                })
+                video.save()
 
             if "VM" in video.platforms:
                 try:
@@ -191,10 +219,15 @@ class VideoPostAdmin(admin.ModelAdmin):
                         f"Vimeo upload failed for {video.title}: {e}",
                         level="error",
                     )
+                video.upload_history.append({
+                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "platform": "VM",
+                "result": result
+                })
+                video.save()
 
             if "DM" in video.platforms:
                 try:
-
                     return redirect(f"/dailymotion/login_redirect/{video.id}/")
                     if video.dailymotion_video_id and check_dailymotion_video_exists(
                         video.dailymotion_video_id, access_token
@@ -227,7 +260,15 @@ class VideoPostAdmin(admin.ModelAdmin):
                         f"Dailymotion upload failed for {video.title}: {e}",
                         level="error",
                     )
-
+                video.upload_history.append({
+                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "platform": "DM",
+                "result": result
+                })
+                video.save()
+                
+                
+                
             video.upload_status = upload_status
             video.save()
 

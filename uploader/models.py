@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.html import format_html
 
+
 class VideoPost(models.Model):
     # Supported platforms
     class Platform(models.TextChoices):
@@ -48,6 +49,8 @@ class VideoPost(models.Model):
     youtube_video_id = models.CharField(max_length=50, blank=True)
     dailymotion_video_id = models.CharField(max_length=50, blank=True)
     vimeo_video_id = models.CharField(max_length=50, blank=True)
+    upload_history = models.JSONField(default=list, blank=True)
+
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
