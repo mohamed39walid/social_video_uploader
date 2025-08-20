@@ -6,6 +6,7 @@ from .utils.youtube_auth import get_youtube_credentials
 from .platforms.youtube import upload_to_youtube
 from .platforms.vimeo_api import upload_to_vimeo 
 from .platforms.dailymotion import upload_to_dailymotion  # fixed import
+from django.shortcuts import redirect
 
 
 # ----------------------
@@ -185,22 +186,39 @@ class VideoPostAdmin(admin.ModelAdmin):
             # Dailymotion
             # ----------------------
             if "DM" in video.platforms:
+                return redirect(f"/dailymotion/login_redirect/{video.id}/")
+
                 try:
+                    # Get access token from session
+                    access_token = request.session.get("dm_access_token")
+
+                    if not access_token:
+                        # Redirect to Dailymotion login with state = VideoPost ID
+                        return redirect(f"/dailymotion/login_redirect/{video.id}/")
+
+                    # Upload video if access token exists
                     published = True if video.dailymotion_privacy == "public" else False
                     res = upload_to_dailymotion(
                         file_path=video.video_file.path,
                         title=video.title,
                         description=video.description,
                         published=published,
-                        access_token="MTR9aCItSRRXHQkiOwB3NVNXdF42Zyx7ADIAMQoyPjxa"
+                        access_token=access_token,
+                        is_for_kids=False  # Required to fix 400 error
                     )
-                    # Extract only the video ID from the response
-                    video.dailymotion_video_id = res['id']
+
+                    # Save video ID and status
+                    video.dailymotion_video_id = res["id"]
                     upload_status["DM"] = "uploaded"
                     self.message_user(request, f"Uploaded {video.title} to Dailymotion")
+
                 except Exception as e:
                     upload_status["DM"] = "failed"
-                    self.message_user(request, f"Dailymotion upload failed for {video.title}: {e}", level="error")
+                    self.message_user(
+                        request,
+                        f"Dailymotion upload failed for {video.title}: {e}",
+                        level="error"
+                    )
 
             # ----------------------
             # Save updated status
